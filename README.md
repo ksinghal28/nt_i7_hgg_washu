@@ -162,28 +162,13 @@ The pipeline performs differential expression analysis comparing:
 - Week 4 vs Week 1
 - Week 4 vs Week 2
 
-Results are exported as CSV files and visualized as volcano plots.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Memory errors**: For large datasets, consider:
-   - Running on a high-memory machine
-   - Subsetting data by patient or timepoint
-   - Reducing `npcs` or `nfeatures`
-
-2. **Missing metadata**: Ensure your Seurat object contains:
-   - `patient`: Patient identifier
-   - `timepoint`: Time point (week1, week2, week4, week14)
-   - `orig.ident`: Original sample identifier
-
-3. **SingleR annotation failures**: 
-   - Ensure reference datasets are properly loaded
-   - Check that your data is human (references are human-specific)
-   - Verify cluster assignments exist before annotation
-
-4. **Path errors**: Update all file paths in the scripts to match your system
+## Minor figure labels note
+The timepoints were updated from the code for plotting in the figures as follows-
+- Week 1 in the code is Week 0 in the publication.
+- Week 2 in the code is Week 1 in the publication.
+- Week 4 in the code is Week 3 in the publication.
+- Week 14 in the code is Week 12 in the publication.
+- We plan on updating the code to reflect the correct timepoints as sooon as possible, and apologize for any confusion in the meantime!
 
 For questions or issues, please contact Kartik Singhal (k.singhal@wustl.edu)
 
