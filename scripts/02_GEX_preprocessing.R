@@ -5,7 +5,7 @@
 # quality control for single-cell RNA-seq data using Seurat
 #
 # Input: Seurat object (RDS file)
-# Output: Preprocessed Seurat object with PCA, JackStraw, and Elbow plots
+# Output: Preprocessed Seurat object with PCA and Elbow plots
 # ==============================================================================
 
 # Load required libraries
@@ -19,7 +19,7 @@ library(Matrix)
 # Load Data
 # ==============================================================================
 cat("Loading Seurat object...\n")
-object <- readRDS(file = '/path/to/tcell seurat object.rds')
+object <- readRDS(file = 'tcell_seurat_object.rds')
 
 # ==============================================================================
 # Normalization and Feature Selection

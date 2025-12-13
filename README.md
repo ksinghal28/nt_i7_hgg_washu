@@ -1,151 +1,155 @@
-# Single-Cell RNA-Seq Analysis: T-Cell Clustering and Annotation
+# Single-Cell RNA-Seq Analysis: T-Cell Clustering and Annotation with ADT
 
-This repository contains the analysis pipeline for single-cell RNA sequencing (scRNA-seq) data focusing on T-cell populations from a longitudinal IL-7 treatment study. The pipeline uses Seurat for preprocessing, clustering, and annotation, with SingleR for automated cell type identification.
+This repository contains the analysis pipeline for single-cell RNA sequencing (scRNA-seq) data with antibody-derived tags (ADT) focusing on T-cell populations from a longitudinal IL-7 treatment study. The pipeline uses Seurat for preprocessing, clustering, and annotation, with SingleR for automated cell type identification and DSB for ADT denoising.
 
 ## Overview
 
 This analysis workflow processes scRNA-seq data through the following stages:
 
-1. **Preprocessing**: Normalization, dimensionality reduction (PCA), and quality control
-2. **Clustering & Annotation**: Cell clustering, UMAP visualization, and cell type annotation
-3. **Visualization**: Generation of publication-quality figures
+1. **ADT Preprocessing**: Denoising antibody-derived tags using DSB normalization
+2. **GEX Preprocessing**: Normalization, dimensionality reduction (PCA), and integration with ADT
+3. **Clustering & Annotation**: Cell clustering, UMAP visualization, filtering, cell type annotation, and differential expression
+4. **Visualization**: Generation of publication figures
 
 ## Repository Structure
 
 ```
-code_ocean_git/
+nt_i7_hgg_washu/
 ├── README.md
-├── 01_preprocessing.R          # Data normalization and PCA
-├── 02_clustering_annotation.R  # Clustering, annotation, and DE analysis
-└── 03_plots.R                 # Figure generation for publication
+├── data/
+│   └── ADT_aggregation_csv.csv
+└── scripts/
+    ├── 00_Get_Tcells.R          # Placeholder for T-cell subsetting
+    ├── 01_ADT_preprocessing.R   # ADT data processing and DSB normalization
+    ├── 02_GEX_preprocessing.R   # GEX preprocessing and ADT integration
+    ├── 03_clustering_annotation.R # Clustering, annotation, Filtering, and DE analysis
+    └── 04_plots.R               # Figure generation for publication
 ```
 
 ## Prerequisites
 
 ### Required R Packages
 
-Install the following R packages before running the scripts (package version information at bottom of README):
+Install the following R packages before running the scripts (package versions at bottom of README):
 ```
-Seurat, ggplot2, cowplot, dplyr, Matrix, viridis, gridExtra, stringr, celldex, SingleR, scater, ggrepel, EnhancedVolcano, pheatmap, RColorBrewer,scRepertoire,ggpubr,janitor,readxl,purrr
+Seurat, ggplot2, cowplot, dplyr, Matrix, viridis, gridExtra, stringr, celldex, SingleR, scater, ggrepel, EnhancedVolcano, pheatmap, RColorBrewer, scRepertoire, ggpubr, janitor, readxl, purrr, dsb, patchwork
 ```
-
-### Data Requirements
-
-- **Input**: Seurat object (`.rds` file) containing single-cell expression data
-- The object should contain:
-  - Raw or filtered count matrix in the `RNA` assay
-  - Cell metadata including patient IDs, timepoints, and sample information
-  - Quality metrics (nCount_RNA, nFeature_RNA, percent_mt)
 
 ## Usage
 
-### Step 1: Preprocessing (`01_preprocessing.R`)
+### Step 1: ADT Preprocessing (`01_ADT_preprocessing.R`)
 
-This script performs:
-- Log normalization
-- Variable feature identification
-- Cell cycle scoring and regression
-- Principal component analysis (PCA)
-- JackStraw analysis for significant PC identification
-- Elbow plot generation
+This script processes antibody-derived tag (ADT) data from CellRanger outputs:
+- Reads and aggregates ADT and GEX data across samples
+- Performs DSB normalization to denoise ADT counts using isotype controls
+- Generates quality control plots for library sizes
 
-**Before running**, update the input file path:
+**Before running**, update the paths:
 ```r
-input_file <- "/path/to/your/tcell_subcluster.rds"
+cellranger_base <- "path/to/cellranger outs"
+aggregation_csv <- "path/to/ADT_aggregation_csv.csv"
 ```
 
 **Run the script:**
 ```r
-source("01_preprocessing.R")
+source("scripts/01_ADT_preprocessing.R")
 ```
 
 **Outputs:**
-- Preprocessed Seurat object (`.rds` file)
-- JackStraw plot (`.jpg`)
-- Elbow plot (`.jpg`)
-- Dimension heatmaps (displayed in R console)
+- `dsb_norm_prot_isowithquant.Rdata`: Denoised ADT matrix
 
-### Step 2: Clustering and Annotation (`02_clustering_annotation.R`)
+### Step 2: GEX Preprocessing (`02_GEX_preprocessing.R`)
 
-This script performs:
-- Neighbor graph construction and clustering
-- UMAP dimensionality reduction
-- Quality control filtering 
-  Note: This cluster list may be different due to the version differences. We removed clusters due to low nCount_RNA, nFeature_RNA, high percent_MT, or high PPBP expression based on violin plots and UMAPs. 
-- SingleR cell type annotation
+This script performs preprocessing on gene expression (GEX) data:
+- Log normalization and variable feature identification
+- Cell cycle scoring and regression
+- Principal component analysis (PCA)
+- Integration with denoised ADT data
+- update the input file path before running
+
+**Outputs:**
+- `preprocessed_with_ADT_seurat.rds`: Preprocessed Seurat object with ADT assay
+- Dimension heatmaps and elbow plot (displayed in R console)
+
+### Step 3: Clustering and Annotation (`03_clustering_annotation.R`)
+
+This script performs clustering, annotation, and differential expression:
+- Neighbor graph construction and clustering with UMAP
+- Quality control filtering (removes low-quality, non-T cell, and doublet clusters)
+- SingleR cell type annotation using immune reference datasets
+- Manual annotation based on markers
 - Marker gene identification
-- Doublet detection (identified a previously overlooked set of monocyte-T cell doublets, and labeled them as such)
 - Differential expression analysis between timepoints
-- Heatmap generation
 
 **Before running**, update the input file path:
 ```r
-input_file <- "/path/to/your/preprocessed_seurat_object.rds"
+object <- readRDS(file = 'preprocessed_with_ADT_seurat.rds')
 ```
 
 **Run the script:**
 ```r
-source("02_clustering_annotation.R")
+source("scripts/03_clustering_annotation.R")
 ```
 
 **Outputs:**
 - Annotated Seurat object (`.rds` file)
 - Marker gene lists (`.csv` files)
-- SingleR annotation scores (`.csv` file)
+- SingleR annotation scores (`.csv` files)
 - Differential expression results (`.csv` files)
-- Volcano plots (displayed in R console)
-- Marker gene heatmap (`.jpeg`)
+- Marker gene heatmap (displayed in R console)
 
-### Step 3: Visualization (`03_plots.R`)
+### Step 4: Visualization (`04_plots.R`)
 
 This script generates publication-quality figures including:
 - UMAP plots colored by timepoint, patient, and cell type
 - Feature plots for marker genes
 - Proportion plots
-- Clonal diversity analysis
-- Additional custom visualizations
+- Patient-specific visualizations
+- Additional custom plots
 
 **Before running**, update the input file path:
 ```r
-object <- readRDS(file = "/path/to/your/annotated_seurat_object.rds")
+object <- readRDS(file = "/path/to/your/final_object.rds")
 ```
 
 **Run the script:**
 ```r
-source("03_plots.R")
+source("scripts/04_plots.R")
 ```
 
 **Outputs:**
 - Publication figures (`.pdf` and `.png` files)
-- Saved in the `FinalFigures/` directory (update path as needed)
 
 ## Key Parameters
 
-### Preprocessing Parameters
-- `nfeatures = 2000`: Number of variable features to identify
-- `npcs = 50`: Number of principal components to compute
+### ADT Preprocessing Parameters
+- Isotype controls: `IgG1_ADT`, `IgG2a_ADT`, `IgG2b_ADT`
+- DSB normalization with quantile clipping and denoising
+
+### GEX Preprocessing Parameters
+- `nfeatures = 2000`: Number of variable features
+- `npcs = 50`: Number of principal components
 - `scale.factor = 10000`: Scaling factor for normalization
+- Cell cycle regression on S and G2M scores
 
 ### Clustering Parameters
-- `PC = 35`: Number of principal components for clustering
-- `resolution = 0.85`: Initial clustering resolution (high for fine-grained clusters)
-- `resolution = 0.5`: Final clustering resolution after filtering
+- `dims = 1:35`: Principal components used for clustering and UMAP
+- Initial clustering resolution = 0.85, final = 0.5 after filtering
 
 ### Filtering Parameters
-The script removes clusters identified as:
-- Non-T cells (based on CD3D expression)
-- Platelets (PPBP expression)
-- Low-quality cells
-- Doublets (T cell-monocyte doublets based on LYZ, S100A8, S100A9)
-
-**Note**: Adjust `clusters_to_remove` in `02_clustering_annotation.R` based on your specific data.
+Clusters removed based on:
+- Low nCount_RNA, nFeature_RNA
+- High percent_mt
+- High PPBP expression (platelets)
+- Non-T cell markers
+- Doublet markers (LYZ, S100A8, S100A9)
 
 ## Cell Type Annotations
 
 The pipeline identifies the following T-cell populations:
 - **CD4 memory**: Memory CD4+ T cells
 - **CD4 naïve**: Naïve CD4+ T cells
-- **CD8 memory/ TEMRA**: Memory and terminally differentiated CD8+ T cells
+- **CD8 memory/TEMRA**: Memory and terminally differentiated CD8+ T cells
 - **CD8 naïve/memory**: Transitional CD8+ T cell populations
 - **CD8 naïve**: Naïve CD8+ T cells
 - **Treg**: Regulatory T cells
@@ -168,7 +172,7 @@ The timepoints were updated from the code for plotting in the figures as follows
 - Week 2 in the code is Week 1 in the publication.
 - Week 4 in the code is Week 3 in the publication.
 - Week 14 in the code is Week 12 in the publication.
-- We plan on updating the code to reflect the correct timepoints as sooon as possible, and apologize for any confusion in the meantime!
+- We plan on updating the code to reflect the correct timepoints as soon as possible, and apologize for any confusion in the meantime!
 
 For questions or issues, please contact Kartik Singhal (k.singhal@wustl.edu)
 
@@ -196,5 +200,7 @@ other attached packages:
 [13] GenomeInfoDb_1.34.9         IRanges_2.32.0              S4Vectors_0.36.2            BiocGenerics_0.44.0        
 [17] MatrixGenerics_1.10.0       matrixStats_1.0.0           stringr_1.5.0               gridExtra_2.3              
 [21] viridis_0.6.4               viridisLite_0.4.2           Matrix_1.5-4.1              dplyr_1.1.4                
-[25] cowplot_1.1.1               ggplot2_3.4.4               SeuratObject_4.1.3          Seurat_4.3.0.1
+[25] cowplot_1.1.1               ggplot2_3.4.4               SeuratObject_4.1.3          Seurat_4.3.0.1             
+[29] dsb_0.3.0                   patchwork_1.1.2
 ```
+

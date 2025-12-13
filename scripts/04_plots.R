@@ -1,3 +1,13 @@
+# ==============================================================================
+# Single-Cell RNA-Seq Analysis: Visualization Pipeline
+# ==============================================================================
+# This script generates publication-quality figures for the scRNA-seq analysis,
+# including UMAP plots, feature plots, proportion plots, and patient-specific visualizations
+#
+# Input: Annotated Seurat object (RDS file)
+# Output: Various plots and figures saved as PDF/PNG files
+# ==============================================================================
+
 library(Seurat)
 library(ggplot2)
 library(cowplot)
@@ -17,8 +27,11 @@ library(purrr)
 #cite RColorBrewer for color palette
 col_pal <- c("#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", "#E5C494", "#BC80BD", "#FBB4AE")
 col_pal_extra <- c("#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", "#E5C494", "#BC80BD", "#FBB4AE", "#E78AC3", "#66C2A5", "#8DA0CB", "#FFD92F", "#B3B3B3")
-object <- readRDS(file = "/path/to/your/final_object.rds")
-################# Panel 5A - DimPlot split by time ###################
+object <- readRDS(file = "annotated_seurat.rds")
+
+# ==============================================================================
+# Panel 5A - DimPlot split by time
+# ==============================================================================
 ####plot all timepoints together and highlight 
 #Get cell barcodes by timepoint
 object <- SetIdent(object, value = "timepoint")
@@ -50,7 +63,9 @@ dim_w14 <- DimPlot(object, cells.highlight = list(week14_bc), sizes.highlight = 
 
 A_main <- plot_grid(dim_w1+NoLegend(), dim_w2+NoLegend(), dim_w4+NoLegend(), dim_w14+NoLegend(), ncol=4)
 
-################# Supplementary Panel 7B - DimPlot with seurat cluster labels ###################
+# ==============================================================================
+# Supplementary Panel 7B - DimPlot with seurat cluster labels
+# ==============================================================================
 A2_main_dimplot <- DimPlot(object, group.by = 'seurat_clusters', label = TRUE, label.size = 10) + 
   scale_color_manual(values = col_pal_extra) +
   theme(plot.title = element_text(size = 40), axis.title = element_text(size = 40), 
@@ -58,7 +73,9 @@ A2_main_dimplot <- DimPlot(object, group.by = 'seurat_clusters', label = TRUE, l
   guides(color = guide_legend(override.aes = list(size = 10)))
 
 
-################# Panel 5B - DimPlot with cell classification final ###################
+# ==============================================================================
+# Panel 5B - DimPlot with cell classification final
+# ==============================================================================
 A3_main_dimplot <- DimPlot(object, group.by = 'cell_classification_final') + 
   scale_color_manual(values = c("light grey", "dark grey", col_pal[3:11])) +
   theme(plot.title = element_text(size = 40), axis.title = element_text(size = 40), 
@@ -66,7 +83,9 @@ A3_main_dimplot <- DimPlot(object, group.by = 'cell_classification_final') +
   guides(color = guide_legend(override.aes = list(size = 10)))
 
 
-################# Supplementary Panel 7A - DimPlot with seurat cluster labels ###################
+# ==============================================================================
+# Supplementary Panel 7A - DimPlot with seurat cluster labels
+# ==============================================================================
 object <- SetIdent(object, value = "patient")
 object_pt1012 <- subset(object, idents = "pt1012")
 object_pt1013 <- subset(object, idents = "pt1013")
@@ -1062,18 +1081,6 @@ pheatmap_order <- c("pt1012_week1", "pt1013_week1", "pt1014_week1", "pt1019_week
 ann_colors = list(Patient = c(`1012` = col_pal[1], `1013` = col_pal[2], `1014`= col_pal[3], `1019`= col_pal[4]), 
                   Timepoint = c(`Week 1` = col_pal[5], `Week 2` = col_pal[6], `Week 4` = col_pal[7]))
 
-'''
-obj_CD4mem <- SetIdent(obj_CD4mem, value = "timepoint")
-CD4memw1_w2 <- FindMarkers(obj_CD4mem, ident.1 = "week2", ident.2 = "week1", min.pct = 0.25)
-CD4memw1_w4 <- FindMarkers(obj_CD4mem, ident.1 = "week4", ident.2 = "week1", min.pct = 0.25)
-CD4memw2_w4 <- FindMarkers(obj_CD4mem, ident.1 = "week4", ident.2 = "week2", min.pct = 0.25)
-CD4memw1_w2_vector <- rownames(CD4memw1_w2)
-CD4memw1_w4_vector <- rownames(CD4memw1_w4)
-CD4memw2_w4_vector <- rownames(CD4memw2_w4)
-
-CD4mem_siglist <- unique(append(CD4memw1_w2_vector, c(CD4memw1_w4_vector, CD4memw2_w4_vector)))
-CD4mem_features <- intersect(CD4mem_siglist, genelist_main)
-'''
 run_sig_features <- function(seurat_obj, cell_idents, obj_name, genelist_main) {
 obj_subset <- subset(seurat_obj, idents = cell_idents)
 obj_subset <- SetIdent(obj_subset, value = "timepoint")
@@ -1102,15 +1109,12 @@ CD8naive_memory_features <- run_sig_features(obj_rm_w14, "CD8 naïve/memory", "C
 
 CD8naive_features <- run_sig_features(seurat_obj = obj_rm_w14, cell_idents = "CD8 naïve", obj_name = "CD8naive", genelist_main)
 
-# run_sig_features(obj_rm_w14, "CD8 naïve", "CD8naive", genelist_main)
-# assign("CD8naive", temp_features)
 
 ##CD4 memory
 obj_CD4mem <- subset(obj_rm_w14, idents = "CD4 memory")
 obj_CD4mem <- SetIdent(obj_CD4mem, value = "sample")
 #Setting up the matrix and its order
 #CD4mem_main_matrix <- AverageExpression(obj_CD4mem, assays = "RNA", features = genelist_main)
-#for final plot, we only need these features (manually reviewed by Jennifer Foltz)
 CD4memory_features_reviewed <- c("CISH","IL7R","LTB","JUND","JUNB","CD74","JUN","SMAD7","FOS")
 
 # CD4mem_main_matrix <- AverageExpression(obj_CD4mem, assays = "RNA", features = CD4memory_features)
@@ -1178,21 +1182,6 @@ pheatmap(CD4naive_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name
 #Dotplot
 DotPlot(obj_CD4naive, features = genelist_main, group.by = 'sample') + 
   coord_flip() + ggtitle("CD4 naive - main genes")
-
-# #Setting up the matrix and its order
-# CD4naive_supp_matrix_RNA <- AverageExpression(obj_CD4naive, features = genelist_class, assays = "RNA")$RNA
-# CD4naive_supp_matrix_ADT <- AverageExpression(obj_CD4naive, features = genelist_adt, assays = "ADT_denoised_iso_quant", slot = "counts")$ADT
-# 
-# CD4naive_supp_matrix <- rbind(CD4naive_supp_matrix_ADT, CD4naive_supp_matrix_RNA)
-# row.names(sample_order) <- colnames(CD4naive_supp_matrix)
-# CD4naive_supp_matrix <- CD4naive_supp_matrix[, pheatmap_order]
-# 
-# pheatmap(CD4naive_supp_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-#          clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-#          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-#          annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD4 naïve supplementary heatmap \n by patient and timepoint")
-
-
 
 ##CD8 memory and TEMRA
 

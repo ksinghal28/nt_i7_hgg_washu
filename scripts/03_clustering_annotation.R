@@ -1,10 +1,10 @@
 # ==============================================================================
 # Single-Cell RNA-Seq Analysis: Clustering and Annotation Pipeline
 # ==============================================================================
-# This script performs clustering, UMAP, cell type annotation using SingleR,
+# This script performs clustering, cell type annotation using SingleR, filtering
 # marker identification, and differential expression analysis
 #
-# Input: Preprocessed Seurat object (from 01_preprocessing.R)
+# Input: Preprocessed Seurat object (from 02_GEX_preprocessing.R)
 # Output: Annotated Seurat object with cell type labels and marker genes
 # ==============================================================================
 
@@ -30,7 +30,7 @@ library(RColorBrewer)
 # ==============================================================================
 cat("Loading preprocessed Seurat object...\n")
 object <- readRDS(file = 'preprocessed_with_ADT_seurat.rds')
-
+DefaultAssay(object) <- "RNA"
 # ==============================================================================
 # Clustering and UMAP
 # ==============================================================================
@@ -249,30 +249,21 @@ object <- RenameIdents(object,
 object[["cell_classification_final"]] <- Idents(object)
 
 # ==============================================================================
-# Patient-Specific Subsets
-# ==============================================================================
-cat("Creating patient-specific subsets...\n")
-object_pt1012 <- subset(x = object, subset = patient == "pt1012")
-object_pt1013 <- subset(x = object, subset = patient == "pt1013")
-object_pt1014 <- subset(x = object, subset = patient == "pt1014")
-object_pt1019 <- subset(x = object, subset = patient == "pt1019")
-
-# ==============================================================================
 # Differential Expression Analysis by Timepoint
 # ==============================================================================
 cat("Performing differential expression analysis...\n")
 
-object_test <- object
-object_test <- SetIdent(object_test, value = "timepoint")
+object_DE <- object
+object_DE <- SetIdent(object_DE, value = "timepoint")
 
 # Find markers between timepoints
-object_w1_w2_markers <- FindMarkers(object_test, 
+object_w1_w2_markers <- FindMarkers(object_DE, 
                                      ident.1 = "week2", 
                                      ident.2 = "week1")
-object_w1_w4_markers <- FindMarkers(object_test, 
+object_w1_w4_markers <- FindMarkers(object_DE, 
                                      ident.1 = "week4", 
                                      ident.2 = "week1")
-object_w2_w4_markers <- FindMarkers(object_test, 
+object_w2_w4_markers <- FindMarkers(object_DE, 
                                      ident.1 = "week4", 
                                      ident.2 = "week2")
 
@@ -302,5 +293,6 @@ DoHeatmap(object, features = top10$gene) +
 # Save Final Object
 # ==============================================================================
 cat("Saving final annotated object...\n")
+output_file <- 'annotated_seurat.rds'
 saveRDS(object, file = output_file)
 

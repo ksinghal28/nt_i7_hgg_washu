@@ -1,3 +1,13 @@
+# ==============================================================================
+# Single-Cell RNA-Seq Analysis: ADT Preprocessing Pipeline
+# ==============================================================================
+# This script processes antibody-derived tag (ADT) data from CellRanger outputs,
+# aggregates samples, and performs DSB normalization for denoising
+#
+# Input: CellRanger output directories for each sample, aggregation CSV
+# Output: Denoised ADT matrix (dsb_norm_prot_isowithquant.Rdata)
+# ==============================================================================
+
 library(Seurat)
 library(dsb)
 library(ggplot2)
@@ -6,7 +16,9 @@ library(cowplot)
 library(dplyr)
 library(Matrix)
 
-## data directories
+# ==============================================================================
+# Data Directories and Paths
+# ==============================================================================
 # Base path to CellRanger output directory - UPDATE THIS PATH
 cellranger_base <- "path/to/cellranger outs"
 
@@ -30,10 +42,33 @@ scrna.dir["pt1019_week1"] <- file.path(cellranger_base, "pt1019", "pt1019_week1"
 scrna.dir["pt1019_week4"] <- file.path(cellranger_base, "pt1019", "pt1019_week4", "outs", "per_sample_outs", "pt1019_week4")
 scrna.dir["pt1019_week14"] <- file.path(cellranger_base, "pt1019", "pt1019_week14", "outs", "per_sample_outs", "pt1019_week14")
 
+isotypes <- c("IgG1_ADT",  "IgG2a_ADT", "IgG2b_ADT")
+
+# Construct paths to per_sample_outs directories
+scrna.dir <- list()
+scrna.dir["pt1012_week1"] <- file.path(cellranger_base, "pt1012", "pt1012_week1", "outs", "per_sample_outs", "pt1012_week1")
+scrna.dir["pt1012_week2"] <- file.path(cellranger_base, "pt1012", "pt1012_week2", "outs", "per_sample_outs", "pt1012_week2")
+scrna.dir["pt1012_week4"] <- file.path(cellranger_base, "pt1012", "pt1012_week4", "outs", "per_sample_outs", "pt1012_week4")
+scrna.dir["pt1012_week14"] <- file.path(cellranger_base, "pt1012", "pt1012_week14", "outs", "per_sample_outs", "pt1012_week14")
+scrna.dir["pt1013_week1"] <- file.path(cellranger_base, "pt1013", "pt1013_week1", "outs", "per_sample_outs", "pt1013_week1")
+scrna.dir["pt1013_week2"] <- file.path(cellranger_base, "pt1013", "pt1013_week2", "outs", "per_sample_outs", "pt1013_week2")
+scrna.dir["pt1013_week4"] <- file.path(cellranger_base, "pt1013", "pt1013_week4", "outs", "per_sample_outs", "pt1013_week4")
+scrna.dir["pt1013_week14"] <- file.path(cellranger_base, "pt1013", "pt1013_week14", "outs", "per_sample_outs", "pt1013_week14")
+scrna.dir["pt1014_week1"] <- file.path(cellranger_base, "pt1014", "pt1014_week1", "outs", "per_sample_outs", "pt1014_week1")
+scrna.dir["pt1014_week2"] <- file.path(cellranger_base, "pt1014", "pt1014_week2", "outs", "per_sample_outs", "pt1014_week2")
+scrna.dir["pt1014_week4"] <- file.path(cellranger_base, "pt1014", "pt1014_week4", "outs", "per_sample_outs", "pt1014_week4")
+scrna.dir["pt1019_week1"] <- file.path(cellranger_base, "pt1019", "pt1019_week1", "outs", "per_sample_outs", "pt1019_week1")
+scrna.dir["pt1019_week4"] <- file.path(cellranger_base, "pt1019", "pt1019_week4", "outs", "per_sample_outs", "pt1019_week4")
+scrna.dir["pt1019_week14"] <- file.path(cellranger_base, "pt1019", "pt1019_week14", "outs", "per_sample_outs", "pt1019_week14")
+
 isotypes <- c("IgG1_ADT",  "IgG2a_ADT", "IgG2b_ADT") 
 samples <- list()
 sample.data <- list()
 sample.rawdata <- list()
+
+# ==============================================================================
+# Load Sample Data
+# ==============================================================================
 for (i in 1:length(scrna.dir)) {
   sample.data[[i]] <- Read10X(paste0(scrna.dir[[i]],"/count/sample_feature_bc_matrix/"))
   rownames(sample.data[[i]]$`Antibody Capture`) <- gsub("TotalSeqC", replacement = "ADT", rownames(sample.data[[i]]$`Antibody Capture`) )
@@ -66,6 +101,9 @@ for (i in 1:length(scrna.dir.raw)) {
 }
 names(sample.raw) <- names(scrna.dir)
 
+# ==============================================================================
+# Aggregate Samples
+# ==============================================================================
 print("making barcodes match for adding to aggregated data")
 aggrfile <- read.csv(file = aggregation_csv)
 
@@ -95,6 +133,9 @@ for (i in 2:length(sample.raw.ordered)) {
   prot <- cbind(sample.raw.ordered[[i]]$`Antibody Capture`, prot)
 }
 
+# ==============================================================================
+# Quality Control and Background Detection
+# ==============================================================================
 rna_size = log10(Matrix::colSums(rna))
 prot_size = log10(Matrix::colSums(prot))
 ngene = Matrix::colSums(rna > 0)
@@ -139,6 +180,9 @@ md[md$bc %in% background_drops,]$category <- "background drops"
 droplets <- ggplot(md[md$prot_size> 0 & md$rna_size > 0, ], aes(x = prot_size, y = rna_size, colour=category)) + geom_point(size = 0.5) 
 print(droplets)
 
+# ==============================================================================
+# DSB Normalization
+# ==============================================================================
 # remove ADTs with poor staining or not used
 dsb_norm_prot_iso_quant = DSBNormalizeProtein(
   cell_protein_matrix = cells_mtx_rawprot, # cell containing droplets
@@ -148,4 +192,7 @@ dsb_norm_prot_iso_quant = DSBNormalizeProtein(
   isotype.control.name.vec = isotypes,
   quantile.clipping = TRUE)
 
+# ==============================================================================
+# Save Denoised ADT Data
+# ==============================================================================
 save(dsb_norm_prot_iso_quant, file = "dsb_norm_prot_isowithquant.Rdata")
