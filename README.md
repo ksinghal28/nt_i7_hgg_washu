@@ -1,4 +1,4 @@
-# Single-Cell RNA-Seq Analysis: T-Cell Clustering and Annotation with ADT
+# Single-Cell RNA-Seq Analysis: NT-I7, a long-acting interleukin-7, increases lymphocyte counts and induces CD8+ T cell clonotype expansion in patients with newly diagnosed high-grade gliomas
 
 This repository contains the analysis pipeline for single-cell RNA sequencing (scRNA-seq) data with antibody-derived tags (ADT) focusing on T-cell populations from a longitudinal IL-7 treatment study. The pipeline uses Seurat for preprocessing, clustering, and annotation, with SingleR for automated cell type identification and DSB for ADT denoising.
 
