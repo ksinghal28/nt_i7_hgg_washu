@@ -6,6 +6,7 @@ This repository contains the analysis pipeline for single-cell RNA sequencing (s
 
 This analysis workflow processes scRNA-seq data through the following stages:
 
+0. **Get T cells**: Subset all PBMCs object to just T cells
 1. **ADT Preprocessing**: Denoising antibody-derived tags using DSB normalization
 2. **GEX Preprocessing**: Normalization, dimensionality reduction (PCA), and integration with ADT
 3. **Clustering & Annotation**: Cell clustering, UMAP visualization, filtering, cell type annotation, and differential expression
