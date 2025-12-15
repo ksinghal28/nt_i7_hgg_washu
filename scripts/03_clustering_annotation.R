@@ -29,7 +29,7 @@ library(RColorBrewer)
 # Load Preprocessed Data
 # ==============================================================================
 cat("Loading preprocessed Seurat object...\n")
-object <- readRDS(file = 'preprocessed_with_ADT_seurat.rds')
+object <- readRDS(file = 'preprocessed_seurat.rds')
 DefaultAssay(object) <- "RNA"
 # ==============================================================================
 # Clustering and UMAP
@@ -54,10 +54,9 @@ print(cluster_plot)
 # Quality Control and Marker Visualization
 # ==============================================================================
 cat("Generating QC plots...\n")
-qc_features <- c("nCount_RNA", "nFeature_RNA", "percent_mt", 
+qc_features <- c("nCount_RNA", "nFeature_RNA", "percent.mt", 
                  "CD3D", "CD4", "CD8A", "IL2RA", "FOXP3", "IL7R", "SELL", 
-                 "CCR7", "CD27", "TCF7", "PPBP", "MKI67", "LYZ", "S100A8", "S100A9",
-                 "CD45RO-ADT", "CD45RA-ADT")
+                 "CCR7", "CD27", "TCF7", "PPBP", "MKI67", "LYZ", "S100A8", "S100A9")
 
 qc_plot <- FeaturePlot(object, features = qc_features, ncol = 5, 
                        cols = c("lightgrey", "red"))
@@ -142,16 +141,12 @@ matched <- matchReferences(ref_monaco, ref_hpca,
                            ref_monaco$label.fine, ref_hpca$label.fine)
 pheatmap::pheatmap(matched, col = viridis::plasma(100), fontsize = 5)
 
-# Export correlation matrix
-write.csv(matched, file = "matchedSingleRaggr.csv", row.names = TRUE)
-
 # Plot score heatmap
 plotScoreHeatmap(pred, clusters = rownames(pred), 
                  show_colnames = TRUE, fontsize = 6)
 
 # Export scores
 scores_matrix <- as.matrix(pred@listData[["scores"]])
-write.csv(scores_matrix, file = "SingleRscoreaggr.csv")
 
 # Add labels to Seurat object
 object[["SingleR.cluster.labels.bulk"]] <- pred$labels[match(object[[]][["seurat_clusters"]], rownames(pred))]
@@ -159,6 +154,21 @@ object[["SingleR.cluster.labels.bulk"]] <- pred$labels[match(object[[]][["seurat
 Idents(object) <- "SingleR.cluster.labels.bulk"
 DimPlot(object, label = TRUE, repel = TRUE) + 
   labs(title = "SingleR Bulk Idents")
+
+# ==============================================================================
+# Add ADT object's data
+# ==============================================================================
+cat("Reading in and adding ADT to seurat object...\n")
+load('dsb_norm_prot_isowithquant.Rdata')
+
+# Find common cells
+common_cells <- intersect(colnames(object), colnames(dsb_norm_prot_iso_quant))
+
+# Subset ADT objects to common cells
+adt_data <- dsb_norm_prot_iso_quant[, common_cells]
+
+# Now this will work
+object[["ADT_denoised_iso_quant"]] <- CreateAssayObject(counts = adt_data)
 
 # ==============================================================================
 # Marker Gene Identification
@@ -171,7 +181,6 @@ markers_singler <- FindAllMarkers(object,
                                    only.pos = TRUE, 
                                    min.pct = 0.25, 
                                    logfc.threshold = 0.25)
-write.csv(markers_singler, file = "markers_singler.csv", row.names = TRUE)
 
 # Markers by Seurat clusters
 Idents(object) <- "seurat_clusters"
@@ -179,7 +188,6 @@ markers_cluster <- FindAllMarkers(object,
                                    only.pos = TRUE, 
                                    min.pct = 0.25, 
                                    logfc.threshold = 0.25)
-write.csv(markers_cluster, file = "markers_cluster.csv", row.names = TRUE)
 
 # ==============================================================================
 # Manual Cell Type Annotation
@@ -266,28 +274,6 @@ object_w1_w4_markers <- FindMarkers(object_DE,
 object_w2_w4_markers <- FindMarkers(object_DE, 
                                      ident.1 = "week4", 
                                      ident.2 = "week2")
-
-write.csv(object_w1_w2_markers, 
-          file = "object_w1_w2_markers.csv", 
-          row.names = TRUE)
-
-
-# ==============================================================================
-# Final Marker Heatmap
-# ==============================================================================
-cat("Generating final marker heatmap...\n")
-markers_final <- FindAllMarkers(object, 
-                                 only.pos = TRUE, 
-                                 min.pct = 0.25, 
-                                 logfc.threshold = 0.25)
-
-top10 <- markers_final %>%
-  group_by(cluster) %>%
-  top_n(n = 10, wt = avg_log2FC)
-
-
-DoHeatmap(object, features = top10$gene) + 
-  theme(plot.margin = unit(c(4, 4, 0, 0), "cm"))
 
 # ==============================================================================
 # Save Final Object

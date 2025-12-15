@@ -37,23 +37,25 @@ Seurat, ggplot2, cowplot, dplyr, Matrix, viridis, gridExtra, stringr, celldex, S
 
 ## Usage
 
+### Step 0: Get T cells (`00_Get_Tcells.R`)
+
+This script processes GEX data from aggregated CellRanger output:
+- Reads aggregated GEX data from h5 file
+- Performs log normalization and variable feature identification
+- SingleR cell type annotation using MonacoImmuneData()
+- Subsets object to T cells
+- Update the input file path before running
+
+**Outputs:**
+- `tcell_seurat_object.rds`: T cells Seurat object
+
 ### Step 1: ADT Preprocessing (`01_ADT_preprocessing.R`)
 
 This script processes antibody-derived tag (ADT) data from CellRanger outputs:
 - Reads and aggregates ADT and GEX data across samples
 - Performs DSB normalization to denoise ADT counts using isotype controls
 - Generates quality control plots for library sizes
-
-**Before running**, update the paths:
-```r
-cellranger_base <- "path/to/cellranger outs"
-aggregation_csv <- "path/to/ADT_aggregation_csv.csv"
-```
-
-**Run the script:**
-```r
-source("scripts/01_ADT_preprocessing.R")
-```
+- Update the input file path before running
 
 **Outputs:**
 - `dsb_norm_prot_isowithquant.Rdata`: Denoised ADT matrix
@@ -64,107 +66,29 @@ This script performs preprocessing on gene expression (GEX) data:
 - Log normalization and variable feature identification
 - Cell cycle scoring and regression
 - Principal component analysis (PCA)
-- Integration with denoised ADT data
-- update the input file path before running
+- Update the input file path before running
 
 **Outputs:**
-- `preprocessed_with_ADT_seurat.rds`: Preprocessed Seurat object with ADT assay
-- Dimension heatmaps and elbow plot (displayed in R console)
+- `preprocessed_seurat.rds`: Preprocessed Seurat object
 
 ### Step 3: Clustering and Annotation (`03_clustering_annotation.R`)
 
-This script performs clustering, annotation, and differential expression:
+This script performs clustering, celltype annotation, and differential expression:
 - Neighbor graph construction and clustering with UMAP
 - Quality control filtering (removes low-quality, non-T cell, and doublet clusters)
 - SingleR cell type annotation using immune reference datasets
+- Integration with denoised ADT data
 - Manual annotation based on markers
 - Marker gene identification
 - Differential expression analysis between timepoints
-
-**Before running**, update the input file path:
-```r
-object <- readRDS(file = 'preprocessed_with_ADT_seurat.rds')
-```
-
-**Run the script:**
-```r
-source("scripts/03_clustering_annotation.R")
-```
+- Update the input file path before running
 
 **Outputs:**
-- Annotated Seurat object (`.rds` file)
-- Marker gene lists (`.csv` files)
-- SingleR annotation scores (`.csv` files)
-- Differential expression results (`.csv` files)
-- Marker gene heatmap (displayed in R console)
+- `annotated_seurat.rds`: Annotated Seurat object
 
 ### Step 4: Visualization (`04_plots.R`)
 
-This script generates publication-quality figures including:
-- UMAP plots colored by timepoint, patient, and cell type
-- Feature plots for marker genes
-- Proportion plots
-- Patient-specific visualizations
-- Additional custom plots
-
-**Before running**, update the input file path:
-```r
-object <- readRDS(file = "/path/to/your/final_object.rds")
-```
-
-**Run the script:**
-```r
-source("scripts/04_plots.R")
-```
-
-**Outputs:**
-- Publication figures (`.pdf` and `.png` files)
-
-## Key Parameters
-
-### ADT Preprocessing Parameters
-- Isotype controls: `IgG1_ADT`, `IgG2a_ADT`, `IgG2b_ADT`
-- DSB normalization with quantile clipping and denoising
-
-### GEX Preprocessing Parameters
-- `nfeatures = 2000`: Number of variable features
-- `npcs = 50`: Number of principal components
-- `scale.factor = 10000`: Scaling factor for normalization
-- Cell cycle regression on S and G2M scores
-
-### Clustering Parameters
-- `dims = 1:35`: Principal components used for clustering and UMAP
-- Initial clustering resolution = 0.85, final = 0.5 after filtering
-
-### Filtering Parameters
-Clusters removed based on:
-- Low nCount_RNA, nFeature_RNA
-- High percent_mt
-- High PPBP expression (platelets)
-- Non-T cell markers
-- Doublet markers (LYZ, S100A8, S100A9)
-
-## Cell Type Annotations
-
-The pipeline identifies the following T-cell populations:
-- **CD4 memory**: Memory CD4+ T cells
-- **CD4 naïve**: Naïve CD4+ T cells
-- **CD8 memory/TEMRA**: Memory and terminally differentiated CD8+ T cells
-- **CD8 naïve/memory**: Transitional CD8+ T cell populations
-- **CD8 naïve**: Naïve CD8+ T cells
-- **Treg**: Regulatory T cells
-- **gamma/delta**: γδ T cells
-- **Proliferating T**: Actively dividing T cells
-- **CD3+; CD56+**: NKT-like cells
-- **T/monocyte doublets**: Cell doublets (filtered)
-- **B cells**: B lymphocytes (contaminants, filtered)
-
-## Differential Expression Analysis
-
-The pipeline performs differential expression analysis comparing:
-- Week 2 vs Week 1
-- Week 4 vs Week 1
-- Week 4 vs Week 2
+This script generates the plots that are in Figure 5 and Supplementary Figure 7.
 
 ## Minor figure labels note
 The timepoints were updated from the code for plotting in the figures as follows-

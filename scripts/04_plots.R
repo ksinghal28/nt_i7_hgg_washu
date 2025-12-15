@@ -5,7 +5,7 @@
 # including UMAP plots, feature plots, proportion plots, and patient-specific visualizations
 #
 # Input: Annotated Seurat object (RDS file)
-# Output: Various plots and figures saved as PDF/PNG files
+# Output: Various plots and figures
 # ==============================================================================
 
 library(Seurat)
@@ -24,14 +24,30 @@ library(janitor)
 library(readxl)
 library(purrr)
 
+################### Load Data ###################
 #cite RColorBrewer for color palette
 col_pal <- c("#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", "#E5C494", "#BC80BD", "#FBB4AE")
 col_pal_extra <- c("#8DD3C7", "#FFED6F", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69", "#FCCDE5", "#E5C494", "#BC80BD", "#FBB4AE", "#E78AC3", "#66C2A5", "#8DA0CB", "#FFD92F", "#B3B3B3")
 object <- readRDS(file = "annotated_seurat.rds")
 
-# ==============================================================================
-# Panel 5A - DimPlot split by time
-# ==============================================================================
+
+################### Helper Functions ###################
+#Function to italicize gene names
+make_italic_names <- function(mat, rc_fun, rc_names) {
+  italic_names <- rc_fun(mat)
+  ids <- rc_names %>% match(rc_fun(mat))
+  ids %>%
+    walk(
+      function(i)
+        italic_names[i] <<-
+        bquote(italic(.(rc_fun(mat)[i]))) %>%
+        as.expression()
+    )
+  italic_names
+}
+
+################### Panel 5A - DimPlot split by time ###################
+
 ####plot all timepoints together and highlight 
 #Get cell barcodes by timepoint
 object <- SetIdent(object, value = "timepoint")
@@ -63,9 +79,9 @@ dim_w14 <- DimPlot(object, cells.highlight = list(week14_bc), sizes.highlight = 
 
 A_main <- plot_grid(dim_w1+NoLegend(), dim_w2+NoLegend(), dim_w4+NoLegend(), dim_w14+NoLegend(), ncol=4)
 
-# ==============================================================================
-# Supplementary Panel 7B - DimPlot with seurat cluster labels
-# ==============================================================================
+
+################### Supplementary Panel 7B - DimPlot with seurat cluster labels ###################
+
 A2_main_dimplot <- DimPlot(object, group.by = 'seurat_clusters', label = TRUE, label.size = 10) + 
   scale_color_manual(values = col_pal_extra) +
   theme(plot.title = element_text(size = 40), axis.title = element_text(size = 40), 
@@ -73,9 +89,9 @@ A2_main_dimplot <- DimPlot(object, group.by = 'seurat_clusters', label = TRUE, l
   guides(color = guide_legend(override.aes = list(size = 10)))
 
 
-# ==============================================================================
-# Panel 5B - DimPlot with cell classification final
-# ==============================================================================
+
+################## Panel 5B - DimPlot with cell classification final ###################
+
 A3_main_dimplot <- DimPlot(object, group.by = 'cell_classification_final') + 
   scale_color_manual(values = c("light grey", "dark grey", col_pal[3:11])) +
   theme(plot.title = element_text(size = 40), axis.title = element_text(size = 40), 
@@ -83,9 +99,9 @@ A3_main_dimplot <- DimPlot(object, group.by = 'cell_classification_final') +
   guides(color = guide_legend(override.aes = list(size = 10)))
 
 
-# ==============================================================================
-# Supplementary Panel 7A - DimPlot with seurat cluster labels
-# ==============================================================================
+
+################## Supplementary Panel 7A - DimPlot with seurat cluster labels ###################
+
 object <- SetIdent(object, value = "patient")
 object_pt1012 <- subset(object, idents = "pt1012")
 object_pt1013 <- subset(object, idents = "pt1013")
@@ -170,10 +186,10 @@ A_supp <- plot_grid(A_supp_pt1012, A_supp_pt1013, A_supp_pt1014, A_supp_pt1019, 
 ################# Panel 5G,I; Supplementary Panel 7F,H - DimPlot with expanded clonotypes ###################
 
 #pt1012
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w14_filtered_contig_annotations.csv")
 
 
 
@@ -294,10 +310,10 @@ highlight_plot_1 <- DimPlot(integrated_pt1012, cells.highlight = list(CAASGGADGL
   
 
 #pt1013
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w14_filtered_contig_annotations.csv")
 
 #might be important to change all boolean columns to upper case for later on, not sure
 s1$is_cell = toupper(s1$is_cell)
@@ -423,10 +439,10 @@ highlight_plot_2 <- DimPlot(integrated_pt1013, cells.highlight = list(CACQDGGGAD
 
 
 #pt1014
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w4_filtered_contig_annotations.csv")
-#s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w4_filtered_contig_annotations.csv")
+#s4 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w14_filtered_contig_annotations.csv")
 
 
 #might be important to change all boolean columns to upper case for later on, not sure
@@ -549,10 +565,10 @@ highlight_plot_3 <- DimPlot(integrated_pt1014, cells.highlight = list(CAASVNDYKL
 
 #pt1019
 
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w1_filtered_contig_annotations.csv")
-#s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w1_filtered_contig_annotations.csv")
+#s2 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w14_filtered_contig_annotations.csv")
 
 #might be important to change all boolean columns to upper case for later on, not sure
 s1$is_cell = toupper(s1$is_cell)
@@ -671,10 +687,10 @@ highlight_main <- ggarrange(highlight_plot_1+NoLegend()+ggtitle(""), highlight_p
 ################# Panel 5F,H; Supplementary Panel 7E,G - Alluvial plots with expanded clonotypes ###################
 
 #pt1012
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w14_filtered_contig_annotations.csv")
 
 
 
@@ -752,10 +768,10 @@ alluv_plot1 <- compareClonotypes(combined_pt1012_CD8, samples = c("weekA1_ID", "
 
 #pt1013
 
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w14_filtered_contig_annotations.csv")
 
 #might be important to change all boolean columns to upper case for later on, not sure
 s1$is_cell = toupper(s1$is_cell)
@@ -830,10 +846,10 @@ alluv_plot2 <- compareClonotypes(combined_pt1013_CD8, samples = c("weekA1_ID", "
 
 #pt1014
 
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w4_filtered_contig_annotations.csv")
-#s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w4_filtered_contig_annotations.csv")
+#s4 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w14_filtered_contig_annotations.csv")
 
 
 #might be important to change all boolean columns to upper case for later on, not sure
@@ -910,10 +926,10 @@ alluv_plot3 <- compareClonotypes(combined_pt1014_CD8, samples = c("weekA1_ID", "
 
 #pt1019
 
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w1_filtered_contig_annotations.csv")
-#s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w1_filtered_contig_annotations.csv")
+#s2 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w14_filtered_contig_annotations.csv")
 
 #might be important to change all boolean columns to upper case for later on, not sure
 s1$is_cell = toupper(s1$is_cell)
@@ -1052,266 +1068,8 @@ prop_plot4 <- ggplot(data=subset(prop_cell_timepoint_pt1019, !is.na(Freq)), aes(
 
 main_prop_plot <- ggarrange(prop_plot1, prop_plot2, prop_plot3, prop_plot4, ncol=2, nrow=2, common.legend = TRUE, legend = "right")
 
-################# Panel 5D,E - heatmaps split by celltype without week14 ###################
-#removing week14
-obj_rm_w14 <- object
-obj_rm_w14 <- SetIdent(obj_rm_w14, value = "timepoint")
-obj_rm_w14 <- subset(x = obj_rm_w14, idents = c("week1", "week2", "week4"))
-obj_rm_w14 <- SetIdent(obj_rm_w14, value = "cell_classification_final")
 
-adt_data <- GetAssayData(obj_rm_w14, slot = "data", assay = "ADT_denoised_iso_quant")
-obj_rm_w14[["ADT_denoised_iso_quant"]] = CreateAssayObject(counts = adt_data)
-
-genelist_main <- c("NR4A2", "JUN", "JUNB", "JUND", "FOSB", "FOS", 
-              "IL7R", "CCR7", "SMAD7", 
-              "LTB", "CISH", "TIGIT", "PRF1", "GZMA", "IFNG", "TNF", "GZMB", "CCL4", "CCL5", "XCL2", "CD74", "HLA-DRA", "HLA-DRB1")
-genelist_adt <- c("CD45RO-ADT", "CD45RA-ADT", "CD4-ADT", "CD8-ADT", "CD56-ADT")
-genelist_class <- c("CD4", "CISH", "CD8A", "CD8B", "GZMH", "NKG7", "IL7R", "GZMB", "GATA3", "CCR7", "CTLA4", "FOXP3",
-                    "MKI67", "GNLY", "FCER1G", "CD79A", "JCHAIN", "IGKC", "CD3D", "LYZ", "S100A8", "S100A9")
-# genelist_supp <- c("CD45RO-ADT", "CD45RA-ADT", "CD4-ADT", "CD8-ADT", "CD56-ADT",
-#                    "CD4", "CISH", "CD8A", "CD8B", "GZMH", "NKG7", "IL7R", "GZMB", "GATA3", "CCR7", "CTLA4", "FOXP3",
-#                    "MKI67", "GNLY", "FCER1G", "CD79A", "JCHAIN", "IGKC", "CD3D", "LYZ", "S100A8", "S100A9")
-
-sample_order <- data.frame(Patient = c("1012", "1012", "1012", "1013", "1013", "1013", "1014", "1014", "1014", "1019", "1019"), 
-                     Timepoint = c("Week 1", "Week 2", "Week 4", "Week 1", "Week 2", "Week 4", "Week 1", "Week 2", "Week 4", "Week 1", "Week 4"))
-
-pheatmap_order <- c("pt1012_week1", "pt1013_week1", "pt1014_week1", "pt1019_week1", "pt1012_week2", "pt1013_week2", 
-                    "pt1014_week2","pt1012_week4", "pt1013_week4", "pt1014_week4", "pt1019_week4")
-
-ann_colors = list(Patient = c(`1012` = col_pal[1], `1013` = col_pal[2], `1014`= col_pal[3], `1019`= col_pal[4]), 
-                  Timepoint = c(`Week 1` = col_pal[5], `Week 2` = col_pal[6], `Week 4` = col_pal[7]))
-
-run_sig_features <- function(seurat_obj, cell_idents, obj_name, genelist_main) {
-obj_subset <- subset(seurat_obj, idents = cell_idents)
-obj_subset <- SetIdent(obj_subset, value = "timepoint")
-obj_w1_w2 <- FindMarkers(obj_subset, ident.1 = "week2", ident.2 = "week1", min.pct = 0.25)
-obj_w1_w4 <- FindMarkers(obj_subset, ident.1 = "week4", ident.2 = "week1", min.pct = 0.25)
-obj_w2_w4 <- FindMarkers(obj_subset, ident.1 = "week4", ident.2 = "week2", min.pct = 0.25)
-
-obj_w1_w2_vector <- rownames(obj_w1_w2[obj_w1_w2$p_val_adj < 0.05, ])
-obj_w1_w4_vector <- rownames(obj_w1_w4[obj_w1_w4$p_val_adj < 0.05, ])
-obj_w2_w4_vector <- rownames(obj_w2_w4[obj_w2_w4$p_val_adj < 0.05, ])
- 
-obj_siglist <- unique(append(obj_w1_w2_vector, c(obj_w1_w4_vector, obj_w2_w4_vector)))
-temp_features <- intersect(obj_siglist, genelist_main)
-
-temp_name <- paste(obj_name, "_features", sep = "")
-return(temp_features)
-}
-
-CD4memory_features <- run_sig_features(obj_rm_w14, "CD4 memory", "CD4memory", genelist_main)
-
-CD4naive_features <- run_sig_features(obj_rm_w14, "CD4 naïve", "CD4naive", genelist_main)
-
-CD8memory_TEMRA_features <- run_sig_features(obj_rm_w14, "CD8 memory/ TEMRA", "CD8memory_TEMRA", genelist_main)
-
-CD8naive_memory_features <- run_sig_features(obj_rm_w14, "CD8 naïve/memory", "CD8naive_memory", genelist_main)
-
-CD8naive_features <- run_sig_features(seurat_obj = obj_rm_w14, cell_idents = "CD8 naïve", obj_name = "CD8naive", genelist_main)
-
-
-##CD4 memory
-obj_CD4mem <- subset(obj_rm_w14, idents = "CD4 memory")
-obj_CD4mem <- SetIdent(obj_CD4mem, value = "sample")
-#Setting up the matrix and its order
-#CD4mem_main_matrix <- AverageExpression(obj_CD4mem, assays = "RNA", features = genelist_main)
-CD4memory_features_reviewed <- c("CISH","IL7R","LTB","JUND","JUNB","CD74","JUN","SMAD7","FOS")
-
-# CD4mem_main_matrix <- AverageExpression(obj_CD4mem, assays = "RNA", features = CD4memory_features)
-CD4mem_main_matrix <- AverageExpression(obj_CD4mem, assays = "RNA", features = CD4memory_features_reviewed)
-CD4mem_main_matrix <- CD4mem_main_matrix$RNA
-row.names(sample_order) <- colnames(CD4mem_main_matrix)
-CD4mem_main_matrix <- CD4mem_main_matrix[, pheatmap_order]
-
-pheatmap(CD4mem_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD4 memory main heatmap \n by patient and timepoint")
-
-#row clustering on
-pheatmap(CD4mem_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = TRUE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD4 memory main heatmap \n by patient and timepoint")
-
-
-#Setting up the matrix and its order
-CD4mem_supp_matrix_RNA <- AverageExpression(obj_CD4mem, features = genelist_class, assays = "RNA")$RNA
-CD4mem_supp_matrix_ADT <- AverageExpression(obj_CD4mem, features = genelist_adt, assays = "ADT_denoised_iso_quant", slot = "counts")$ADT_denoised_iso_quant
-
-CD4mem_supp_matrix <- rbind(CD4mem_supp_matrix_ADT, CD4mem_supp_matrix_RNA)
-row.names(sample_order) <- colnames(CD4mem_supp_matrix)
-CD4mem_supp_matrix <- CD4mem_supp_matrix[, pheatmap_order]
-
-pheatmap(CD4mem_supp_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE,
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE,
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order,
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD4 memory supplementary heatmap \n by patient and timepoint")
-
-#Dotplot
-DotPlot(obj_CD4mem, features = genelist_main, group.by = 'sample') + 
-  coord_flip() + ggtitle("CD4 memory - main genes")
-
-##CD4 naive
-
-obj_CD4naive <- subset(obj_rm_w14, idents = "CD4 naïve")
-obj_CD4naive <- SetIdent(obj_CD4naive, value = "sample")
-
-#Setting up the matrix and its order
-#CD4naive_main_matrix <- AverageExpression(obj_CD4naive, assays = "RNA", features = genelist_main)
-#for final plot, we only need these features (manually reviewed by Jennifer Foltz)
-CD4naive_features_reviewed <- c("LTB","IL7R","CISH","CCR7","JUNB","CD74","JUND","JUN","SMAD7","NR4A2")
-
-# CD4naive_main_matrix <- AverageExpression(obj_CD4naive, assays = "RNA", features = CD4naive_features)
-CD4naive_main_matrix <- AverageExpression(obj_CD4naive, assays = "RNA", features = CD4naive_features_reviewed)
-
-CD4naive_main_matrix <- CD4naive_main_matrix$RNA
-row.names(sample_order) <- colnames(CD4naive_main_matrix)
-CD4naive_main_matrix <- CD4naive_main_matrix[, pheatmap_order]
-
-pheatmap(CD4naive_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD4 naïve main heatmap \n by patient and timepoint")
-
-#row clustering on
-pheatmap(CD4naive_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = TRUE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD4 naïve main heatmap \n by patient and timepoint")
-#Dotplot
-DotPlot(obj_CD4naive, features = genelist_main, group.by = 'sample') + 
-  coord_flip() + ggtitle("CD4 naive - main genes")
-
-##CD8 memory and TEMRA
-
-obj_CD8mem_TEMRA <- subset(obj_rm_w14, idents = "CD8 memory/ TEMRA")
-obj_CD8mem_TEMRA <- SetIdent(obj_CD8mem_TEMRA, value = "sample")
-
-#Setting up the matrix and its order
-#for final plot, we only need these features (manually reviewed by Jennifer Foltz)
-CD8mem_TEMRA_features_reviewed <- c("GZMA","PRF1","CISH","CCL4","JUND","GZMB","IL7R","JUN","LTB","XCL2",    
-                                    "TIGIT","TNF","IFNG","SMAD7","CD74","HLA-DRA","FOSB")
-
-# CD8mem_TEMRA_main_matrix <- AverageExpression(obj_CD8mem_TEMRA, assays = "RNA", features = genelist_main)
-# CD8mem_TEMRA_main_matrix <- AverageExpression(obj_CD8mem_TEMRA, assays = "RNA", features = CD8memory_TEMRA_features)
-CD8mem_TEMRA_main_matrix <- AverageExpression(obj_CD8mem_TEMRA, assays = "RNA", features = CD8mem_TEMRA_features_reviewed)
-
-CD8mem_TEMRA_main_matrix <- CD8mem_TEMRA_main_matrix$RNA
-row.names(sample_order) <- colnames(CD8mem_TEMRA_main_matrix)
-CD8mem_TEMRA_main_matrix <- CD8mem_TEMRA_main_matrix[, pheatmap_order]
-
-pheatmap(CD8mem_TEMRA_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 memory/ TEMRA main heatmap \n by patient and timepoint")
-
-#row clustering on
-pheatmap(CD8mem_TEMRA_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = TRUE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 memory/ TEMRA main heatmap \n by patient and timepoint")
-
-#Dotplot
-DotPlot(obj_CD8mem_TEMRA, features = genelist_main, group.by = 'sample') + 
-  coord_flip() + ggtitle("CD8 memory/TEMRA - main genes")
-
-# #Setting up the matrix and its order
-# CD8mem_TEMRA_supp_matrix_RNA <- AverageExpression(obj_CD8mem_TEMRA, features = genelist_class, assays = "RNA")$RNA
-# CD8mem_TEMRA_supp_matrix_ADT <- AverageExpression(obj_CD8mem_TEMRA, features = genelist_adt, assays = "ADT_denoised_iso_quant", slot = "counts")$ADT
-# 
-# CD8mem_TEMRA_supp_matrix <- rbind(CD8mem_TEMRA_supp_matrix_ADT, CD8mem_TEMRA_supp_matrix_RNA)
-# row.names(sample_order) <- colnames(CD8mem_TEMRA_supp_matrix)
-# CD8mem_TEMRA_supp_matrix <- CD8mem_TEMRA_supp_matrix[, pheatmap_order]
-# 
-# pheatmap(CD8mem_TEMRA_supp_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-#          clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-#          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-#          annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 memory/ TEMRA supplementary heatmap \n by patient and timepoint")
-
-
-
-##CD8 naive and memory
-
-obj_CD8naive_mem <- subset(obj_rm_w14, idents = "CD8 naïve/memory")
-obj_CD8naive_mem <- SetIdent(obj_CD8naive_mem, value = "sample")
-
-#Setting up the matrix and its order
-# CD8naive_mem_main_matrix <- AverageExpression(obj_CD8naive_mem, assays = "RNA", features = genelist_main)
-#for final plot, we only need these features (manually reviewed by Jennifer Foltz)
-CD8naive_mem_features_reviewed <- c("IL7R","JUNB","CD74","JUND","GZMA","PRF1","LTB","CISH","TIGIT","HLA-DRB1",
-                                    "JUN","CCL4","HLA-DRA","FOS","NR4A2","CCR7","SMAD7")
-
-# CD8naive_mem_main_matrix <- AverageExpression(obj_CD8naive_mem, assays = "RNA", features = CD8naive_memory_features)
-CD8naive_mem_main_matrix <- AverageExpression(obj_CD8naive_mem, assays = "RNA", features = CD8naive_mem_features_reviewed)
-
-CD8naive_mem_main_matrix <- CD8naive_mem_main_matrix$RNA
-row.names(sample_order) <- colnames(CD8naive_mem_main_matrix)
-CD8naive_mem_main_matrix <- CD8naive_mem_main_matrix[, pheatmap_order]
-
-pheatmap(CD8naive_mem_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 naïve/memory main heatmap \n by patient and timepoint")
-
-#row clustering on
-pheatmap(CD8naive_mem_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = TRUE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 naïve/memory main heatmap \n by patient and timepoint")
-
-#Dotplot
-DotPlot(obj_CD8naive_mem, features = genelist_main, group.by = 'sample') + 
-  coord_flip() + ggtitle("CD8 naive/memory - main genes")
-
-##CD8 naive
-
-obj_CD8naive <- subset(obj_rm_w14, idents = "CD8 naïve/memory")
-obj_CD8naive <- SetIdent(obj_CD8naive, value = "sample")
-
-#Setting up the matrix and its order
-# CD8naive_main_matrix <- AverageExpression(obj_CD8naive, assays = "RNA", features = genelist_main)
-#for final plot, we only need these features (manually reviewed by Jennifer Foltz)
-CD8naive_features_reviewed <- c()
-
-CD8naive_main_matrix <- AverageExpression(obj_CD8naive, assays = "RNA", features = CD8naive_features)
-# CD8naive_main_matrix <- AverageExpression(obj_CD8naive, assays = "RNA", features = CD8naive_features_reviewed)
-
-
-CD8naive_main_matrix <- CD8naive_main_matrix$RNA
-row.names(sample_order) <- colnames(CD8naive_main_matrix)
-CD8naive_main_matrix <- CD8naive_main_matrix[, pheatmap_order]
-
-pheatmap(CD8naive_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 naïve main heatmap \n by patient and timepoint")
-
-#row clustering on
-pheatmap(CD8naive_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = TRUE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 naïve main heatmap \n by patient and timepoint")
-
-#Dotplot
-DotPlot(obj_CD8naive, features = genelist_main, group.by = 'sample') + 
-  coord_flip() + ggtitle("CD8 naive - main genes")
-
-# #Setting up the matrix and its order
-# CD8naive_mem_supp_matrix_RNA <- AverageExpression(obj_CD8naive_mem, features = genelist_class, assays = "RNA")$RNA
-# CD8naive_mem_supp_matrix_ADT <- AverageExpression(obj_CD8naive_mem, features = genelist_adt, assays = "ADT_denoised_iso_quant", slot = "counts")$ADT
-# 
-# CD8naive_mem_supp_matrix <- rbind(CD8naive_mem_supp_matrix_ADT, CD8naive_mem_supp_matrix_RNA)
-# row.names(sample_order) <- colnames(CD8naive_mem_supp_matrix)
-# CD8naive_mem_supp_matrix <- CD8naive_mem_supp_matrix[, pheatmap_order]
-# 
-# pheatmap(CD8naive_mem_supp_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-#          clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-#          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-#          annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "CD8 naïve/memory supplementary heatmap \n by patient and timepoint")
-
-
-#Heatmap Supplementary by celltype
+################## Supplementary Panel 7C Heatmap by celltype marker genes ##################
 object <- SetIdent(object, value = "cell_classification_final")
 
 sample_order_supp <- data.frame(CellType = c("B cells", "T/monocyte doublets", "CD3+; CD56+", "CD4 memory", "CD4 naïve", "CD8 memory/ TEMRA", 
@@ -1343,117 +1101,14 @@ supp_celltypes_heatmap <- pheatmap(object_adt_matrix, scale = "row", color = rev
          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order_supp,
          labels_row = make_italic_names(object_adt_matrix, rownames, rownames(object_adt_matrix)),
          annotation_colors = ann_colors_supp, fontsize = 16, cellwidth = 30, cellheight = 15)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/Heatmap_celltypes_supp_0713.pdf", supp_celltypes_heatmap, width = 20, height = 20, units = "in")
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/Heatmap_celltypes_supp_0713.png", supp_celltypes_heatmap, width = 10, height = 10, units = "in")
 
-#row clustering on
-pheatmap(object_adt_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = TRUE,
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE,
-         show_colnames = TRUE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order_supp,
-         annotation_colors = ann_colors_supp, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "Cell classification heatmap")
-
-
-##Heatmap split by patient 
-object_pt1014 <- SetIdent(object_pt1014, value = "cell_classification_final")
-obj <- subset(object_pt1014, idents = "CD8 naïve/memory")
-obj <- SetIdent(obj, value = "timepoint")
-
-sample_order <- data.frame(Timepoint = c("Week 1", "Week 2", "Week 4"))
-ann_colors = list(Timepoint = c(`Week 1` = col_pal[5], `Week 2` = col_pal[6], `Week 4` = col_pal[7]))
-
-#Setting up the matrix and its order
-main_matrix <- AverageExpression(obj, assays = "RNA", features = genelist_main)
-main_matrix <- main_matrix$RNA
-row.names(sample_order) <- colnames(main_matrix)
-#CD4mem_main_matrix <- CD4mem_main_matrix[, pheatmap_order]
-
-pheatmap(main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-         clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-         show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-         annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "pt1014 CD8 naïve/memory main heatmap by timepoint")
-
-##Make a function for it!!!
-CD4memory_features <- c("CISH", "IL7R", "LTB" , "JUND", "JUNB", "CD74", "JUN", "SMAD7", 
-                        "FOSB", "FOS")
-CD4naive_features <- c("LTB", "IL7R", "CISH", "CCR7", "JUNB", "CD74", "JUND", 
-                       "JUN", "SMAD7", "NR4A2")
-CD8memory_TEMRA_features <- c("LTB", "XCL2", "TIGIT", "TNF", "IFNG", "JUNB", 
-                              "SMAD7", "CD74", "HLA-DRA", "FOSB")
-CD8naive_memory_features <- c("IL7R", "JUNB", "CD74", "JUND", "GZMA", "PRF1", "LTB", 
-                              "CISH", "TIGIT", "HLA-DRB1", "FOSB", "JUN", "CCL4", 
-                              "HLA-DRA", "FOS", "CCL5", "NR4A2", "CCR7", "SMAD7")
-
-run_patient_pheatmap <- function(seurat_obj, patient, cell_idents, features_to_plot, plot_title) {
-  temp_obj <- SetIdent(seurat_obj, value = "patient")
-  temp_obj <- subset(temp_obj, idents = patient)
-  
-  temp_obj <- SetIdent(temp_obj, value = "cell_classification_final")
-  temp_obj <- subset(temp_obj, idents = cell_idents)
-  temp_obj <- SetIdent(temp_obj, value = "timepoint")
-  
-  if (patient == "pt1019") {
-    sample_order <- data.frame(Timepoint = c("Week 1", "Week 4"))
-    ann_colors = list(Timepoint = c(`Week 1` = col_pal[5], `Week 4` = col_pal[7]))
-  } else {
-  sample_order <- data.frame(Timepoint = c("Week 1", "Week 2", "Week 4"))
-  ann_colors = list(Timepoint = c(`Week 1` = col_pal[5], `Week 2` = col_pal[6], `Week 4` = col_pal[7]))
-  }
-  #Setting up the matrix and its order
-  temp_main_matrix <- AverageExpression(temp_obj, assays = "RNA", features = features_to_plot)
-  temp_main_matrix <- temp_main_matrix$RNA
-  row.names(sample_order) <- colnames(temp_main_matrix)
-  
-  temp_title <- paste(plot_title, patient, sep = "_")
-  temp_plot <- pheatmap(temp_main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-           clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-           show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-           annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = temp_title)
-  
-  ggsave(paste("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/pheatmaps/",temp_title, ".png", sep = ""), temp_plot, width = 7, height = 3, units = "in")
-}
-
-patient_list <- c("pt1012", "pt1013", "pt1014", "pt1019")
-
-for (i in 1:length(patient_list)) {
-  run_patient_pheatmap(obj_rm_w14, patient_list[i], "CD4 memory", CD4memory_features, "CD4_memory_main_heatmap")
-  run_patient_pheatmap(obj_rm_w14, patient_list[i], "CD4 naïve", CD4naive_features, "CD4_naive_main_heatmap")
-  run_patient_pheatmap(obj_rm_w14, patient_list[i], "CD8 memory/ TEMRA", CD8memory_TEMRA_features, "CD8_memory_TEMRA_main_heatmap")
-  run_patient_pheatmap(obj_rm_w14, patient_list[i], "CD8 naïve/memory", CD8naive_memory_features, "CD8_naive_memory_main_heatmap")
-  run_patient_pheatmap(obj_rm_w14, patient_list[i], "CD8 naïve", CD8naive_features, "CD8_naive_main_heatmap")
-}
-
-#Function to italicize gene names
-make_italic_names <- function(mat, rc_fun, rc_names) {
-  italic_names <- rc_fun(mat)
-  ids <- rc_names %>% match(rc_fun(mat))
-  ids %>%
-    walk(
-      function(i)
-        italic_names[i] <<-
-        bquote(italic(.(rc_fun(mat)[i]))) %>%
-        as.expression()
-    )
-  italic_names
-}
-
-##### Panel H (final) Heatmap by timepoint combining patient #####
+################# Panel 5D,E - heatmaps split by celltype without week14 ###################
 obj_rm_w14 <- SetIdent(obj_rm_w14, value = "cell_classification_final")
 obj <- subset(obj_rm_w14, idents = "CD8 naïve/memory")
 obj <- SetIdent(obj, value = "timepoint")
 
 sample_order <- data.frame(Timepoint = c("Week 1", "Week 2", "Week 4"))
 ann_colors_supp = list(Timepoint = c(`Week 1` = col_pal_extra[1], `Week 2` = col_pal_extra[2], `Week 4` = col_pal_extra[14]))
-
-# #Setting up the matrix and its order
-# main_matrix <- AverageExpression(obj, assays = "RNA", features = genelist_main)
-# main_matrix <- main_matrix$RNA
-# row.names(sample_order) <- colnames(main_matrix)
-# #CD4mem_main_matrix <- CD4mem_main_matrix[, pheatmap_order]
-# 
-# pheatmap(main_matrix, scale = "row", color = rev(brewer.pal(n = 9, name = "RdBu")), cluster_rows = FALSE, cluster_cols = FALSE, 
-#          clustering_distance_rows = "correlation", clustering_distance_cols = "correlation", legend = TRUE, show_rownames = TRUE, 
-#          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
-#          annotation_colors = ann_colors, fontsize_row = 10, cellwidth = 20, cellheight = 9, main = "Combined CD8 naïve/memory main heatmap by timepoint")
 
 ##CD4 memory
 obj_CD4mem <- subset(obj_rm_w14, idents = "CD4 memory")
@@ -1472,13 +1127,8 @@ CD4mem_main_heatmap <- pheatmap(CD4mem_main_matrix, scale = "row", color = rev(b
          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
          annotation_colors = ann_colors_supp, fontsize = 16, cellwidth = 30, cellheight = 15,
          labels_row = make_italic_names(CD4mem_main_matrix, rownames, rownames(CD4mem_main_matrix)))
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD4mem_main_heatmap_0713.pdf", 
-       CD4mem_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD4mem_main_heatmap_0713.png", 
-       CD4mem_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
 
 ##CD4 naive
-
 obj_CD4naive <- subset(obj_rm_w14, idents = "CD4 naïve")
 obj_CD4naive <- SetIdent(obj_CD4naive, value = "timepoint")
 
@@ -1496,13 +1146,8 @@ CD4naive_main_heatmap <- pheatmap(CD4naive_main_matrix, scale = "row", color = r
          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
          annotation_colors = ann_colors_supp, fontsize = 16, cellwidth = 30, cellheight = 15,
          labels_row = make_italic_names(CD4naive_main_matrix, rownames, rownames(CD4naive_main_matrix)))
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD4naive_main_heatmap_0713.pdf", 
-       CD4naive_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD4naive_main_heatmap_0713.png", 
-       CD4naive_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
 
 ##CD8 memory and TEMRA
-
 obj_CD8mem_TEMRA <- subset(obj_rm_w14, idents = "CD8 memory/ TEMRA")
 obj_CD8mem_TEMRA <- SetIdent(obj_CD8mem_TEMRA, value = "timepoint")
 
@@ -1521,10 +1166,6 @@ CD8mem_TEMRA_main_heatmap <- pheatmap(CD8mem_TEMRA_main_matrix, scale = "row", c
          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
          annotation_colors = ann_colors_supp, fontsize = 16, cellwidth = 30, cellheight = 15,
          labels_row = make_italic_names(CD8mem_TEMRA_main_matrix, rownames, rownames(CD8mem_TEMRA_main_matrix)))
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD8mem_TEMRA_main_heatmap_0713.pdf", 
-       CD8mem_TEMRA_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD8mem_TEMRA_main_heatmap_0713.png", 
-       CD8mem_TEMRA_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
 
 ##CD8 naive and memory
 
@@ -1546,10 +1187,6 @@ CD8naive_mem_main_heatmap <- pheatmap(CD8naive_mem_main_matrix, scale = "row", c
          show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = TRUE, annotation_col = sample_order, 
          annotation_colors = ann_colors_supp, fontsize = 16, cellwidth = 30, cellheight = 15,
          labels_row = make_italic_names(CD8naive_mem_main_matrix, rownames, rownames(CD8naive_mem_main_matrix)))
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD8naive_mem_main_heatmap_0713.pdf", 
-       CD8naive_mem_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD8naive_mem_main_heatmap_0713.png", 
-       CD8naive_mem_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
 
 ##CD8 naive
 
@@ -1570,19 +1207,14 @@ CD8naive_main_heatmap <- pheatmap(CD8naive_main_matrix, scale = "row", color = r
                                       show_colnames = FALSE, annotation_names_col = TRUE, annotation_names_row = FALSE, annotation_col = sample_order, 
                                       annotation_colors = ann_colors_supp, fontsize = 16, cellwidth = 30, cellheight = 15,
                                       labels_row = make_italic_names(CD8naive_main_matrix, rownames, rownames(CD8naive_main_matrix)))
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD8naive_main_heatmap_0713.pdf", 
-       CD8naive_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/CD8naive_main_heatmap_0713.png", 
-       CD8naive_main_heatmap, width = 7, height = 5, units = "in", limitsize = FALSE)
 
-
-#################Panel I - Clonal diversity###################
+################# Supplementary Panel 7D - Clonal diversity###################
 
 #pt1012
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1012_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1012_w14_filtered_contig_annotations.csv")
 
 
 
@@ -1622,10 +1254,10 @@ contig_list_pt1012 <- list(s1, s2, s3, s4)
 contig_list_pt1012_sub <- list(s1_sub, s2_sub, s3_sub, s4_sub)
 
 #pt1013
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1013_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1013_w14_filtered_contig_annotations.csv")
 
 #might be important to change all boolean columns to upper case for later on, not sure
 s1$is_cell = toupper(s1$is_cell)
@@ -1664,10 +1296,10 @@ contig_list_pt1013_sub <- list(s1_sub, s2_sub, s3_sub, s4_sub)
 
 
 #pt1014
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w1_filtered_contig_annotations.csv")
-s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w4_filtered_contig_annotations.csv")
-#s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1014_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w1_filtered_contig_annotations.csv")
+s2 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w4_filtered_contig_annotations.csv")
+#s4 <- read.csv("path/to/cellranger/VDJ outs/pt1014_w14_filtered_contig_annotations.csv")
 
 
 #might be important to change all boolean columns to upper case for later on, not sure
@@ -1708,10 +1340,10 @@ contig_list_pt1014_sub <- list(s1_sub, s2_sub, s3_sub)
 
 #pt1019
 
-s1 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w1_filtered_contig_annotations.csv")
-#s2 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w2_filtered_contig_annotations.csv")
-s3 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w4_filtered_contig_annotations.csv")
-s4 <- read.csv("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/Integrating with Seurat/pt1019_w14_filtered_contig_annotations.csv")
+s1 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w1_filtered_contig_annotations.csv")
+#s2 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w2_filtered_contig_annotations.csv")
+s3 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w4_filtered_contig_annotations.csv")
+s4 <- read.csv("path/to/cellranger/VDJ outs/pt1019_w14_filtered_contig_annotations.csv")
 
 #might be important to change all boolean columns to upper case for later on, not sure
 s1$is_cell = toupper(s1$is_cell)
@@ -1772,10 +1404,6 @@ clonal_diversity_combined <- clonalDiversity(combined_total, cloneCall = "gene",
   scale_x_discrete(limits = c("week1", "week2", "week4", "week14"), labels = c("Week 1", "Week 2", "Week 4", "Week 14")) + 
   scale_color_manual(values = c(col_pal[1], col_pal[3], col_pal[4], col_pal[7])) +
   theme(text = element_text(size = 20))
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/clonal_diversity_combined_0713.png", 
-       clonal_diversity_combined, width = 24, height = 6, units = "in", limitsize = FALSE)
-ggsave("/Users/kartiksinghal/Desktop/Rotation3-FehnigerLab/IL-7 scRNA/FinalFigures/clonal_diversity_combined_0713.pdf", 
-       clonal_diversity_combined, width = 24, height = 6, units = "in", limitsize = FALSE)
 
 
 

@@ -15,7 +15,7 @@ library(celldex)
 # Load CellRanger outputs, Create Seurat Object, Process
 # ==============================================================================
 
-dat_GEX <- Read10X_h5('/Volumes/tfehnige/Active/scRNA-seq/Campian_GBM/cellranger_outputs/aggr_minus_pt1019_w2/aggr_minus_pt1019_w2/outs/count/filtered_feature_bc_matrix.h5')
+dat_GEX <- Read10X_h5('../data/filtered_feature_bc_matrix.h5')
 
 dat_GEX <- CreateSeuratObject(counts = dat_GEX[["Gene Expression"]], min.cells = 10)
 
@@ -36,10 +36,10 @@ DefaultAssay(dat_GEX) <- "RNA"
 dat_GEX <- NormalizeData(dat_GEX, normalization.method = "LogNormalize", scale.factor = 10000)
 dat_GEX <- FindVariableFeatures(dat_GEX, selection.method = "vst", nfeatures = 2000)
 dat_GEX <- ScaleData(dat_GEX)
-dat_GEX <- RunPCA(dat_GEX, npcs = 50, seed.use = 42)
+dat_GEX <- RunPCA(dat_GEX, npcs = 50)
 dat_GEX <- FindNeighbors(dat_GEX, dims = 1:10)
 dat_GEX <- FindClusters(dat_GEX, resolution = 0.5)
-dat_GEX <- RunUMAP(dat_GEX, dims = 1:10, seed.use = 42)
+dat_GEX <- RunUMAP(dat_GEX, dims = 1:10)
 
 # Clean up gene names - remove GRCh38- prefix
 counts <- GetAssayData(dat_GEX, slot = "counts")

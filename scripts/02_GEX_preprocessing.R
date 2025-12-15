@@ -76,22 +76,7 @@ elbow <- ElbowPlot(object, ndims = 50)
 print(elbow)
 
 # ==============================================================================
-# Add ADT object's data
-# ==============================================================================
-cat("Reading in and adding ADT to seurat object...\n")
-load('dsb_norm_prot_isowithquant.Rdata')
-
-# Find common cells
-common_cells <- intersect(colnames(object), colnames(dsb_norm_prot_iso_quant))
-
-# Subset ADT objects to common cells
-adt_data <- dsb_norm_prot_iso_quant[, common_cells]
-
-# Now this will work
-object[["ADT_denoised_iso_quant"]] <- CreateAssayObject(counts = adt_data)
-
-# ==============================================================================
 # Save Preprocessed Object
 # ==============================================================================
 cat("Saving preprocessed object...\n")
-saveRDS(object, file = 'preprocessed_with_ADT_seurat.rds')
+saveRDS(object, file = 'preprocessed_seurat.rds')
